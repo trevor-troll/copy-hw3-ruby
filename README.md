@@ -1,4 +1,4 @@
-# CHIP 5.3: Rails Intro - RottenPotatoes (Movies CRUD)
+# Rails Intro - RottenPotatoes (Movies CRUD)
 
 This homework introduces the Rails MVC flow by building a simple RottenPotatoes-style app.
 You will complete and verify a basic Movies CRUD interface with Rails conventions.
