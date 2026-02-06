@@ -37,13 +37,13 @@ You will complete the UI and tests for the Movies resource.
 Where to Work
 -------------
 
-Primary files you will touch:
+Primary files you will touch (files requiring modifications to complete the assignment are not limited to the following):
 
 * `app/views/movies/index.html.erb` (Part 2 starts here)
 * `app/views/movies/_form.html.erb`, `app/views/movies/show.html.erb`, `app/views/movies/edit.html.erb`, `app/views/movies/new.html.erb`
 * `test/controllers/movies_controller_test.rb`
 * `test/system/movies_test.rb`
-* `test/fixtures/movies.yml` (you need to add this file)
+* `test/fixtures/movies.yml` (you need to add this file for local testing)
 
 Tasks
 -----
@@ -55,7 +55,7 @@ Tasks
 5. Add fixtures in `test/fixtures/movies.yml` so tests using `movies(:one)` pass.
 6. Run the tests and fix any failures.
 
-Local Setup (Optional)
+Local Setup
 ----------------------
 
 Install gems and set up the database:
