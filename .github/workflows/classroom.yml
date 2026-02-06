@@ -64,48 +64,28 @@ jobs:
           echo "Server did not start in time" >&2
           exit 1
 
-      - name: Run autograder
-        run: |
-          mkdir -p autograder/results
-          cd autograder
-          AUTOGRADER_URI=localhost:3000 BUNDLE_GEMFILE=Gemfile bundle exec rspec \
-            --require ./rspec_gradescope_formatter.rb \
-            --format RSpecGradescopeFormatter \
-            ./app_spec.rb
-
-      - name: Summarize autograder score
-        id: autograder-summary
-        run: |
-          python - <<'PY'
-          import json
-          import os
-
-          with open("autograder/results/results.json") as f:
-            data = json.load(f)
-
-          tests = data.get("tests", [])
-          max_score = sum(t.get("max_score", 0) for t in tests)
-          score = sum(t.get("score", 0) for t in tests)
-          failed = [t.get("name", "") for t in tests if t.get("score", 0) < t.get("max_score", 0)]
-          status = "pass" if score == max_score else "fail"
-          output = "All tests passed" if not failed else "Failed: " + ", ".join(failed)
-          result = {
-            "score": score,
-            "max_score": max_score,
-            "status": status,
-            "output": output
-          }
-
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            f.write("result=" + json.dumps(result) + "\n")
-          PY
+      - name: Autograder
+        id: autograder
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Autograder"
+          setup-command: ""
+          command: |
+            mkdir -p autograder/results
+            cd autograder
+            AUTOGRADER_URI=localhost:3000 BUNDLE_GEMFILE=Gemfile bundle exec rspec \
+              --require ./rspec_gradescope_formatter.rb \
+              --format RSpecGradescopeFormatter \
+              ./app_spec.rb
+          timeout: 20
+          max-score: 185
 
       - name: Autograding Reporter
         uses: classroom-resources/autograding-grading-reporter@v1
         env:
-          AUTOGRADER_RESULTS: ${{ steps.autograder-summary.outputs.result }}
+          AUTOGRADER_RESULTS: ${{ steps.autograder.outputs.result }}
         with:
-          runners: autograder-summary
+          runners: autograder
 
       - name: Upload results
         uses: actions/upload-artifact@v4
