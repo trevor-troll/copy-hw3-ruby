@@ -1,0 +1,73 @@
+name: Autograde
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3.8"
+          bundler-cache: false
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev
+
+      - name: Decrypt autograder
+        env:
+          AUTOGRADER_KEY: ${{ secrets.AUTOGRADER_KEY }}
+        run: |
+          mkdir -p autograder
+          openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:"$AUTOGRADER_KEY" \
+            -in .github/secure/autograder.tgz.enc \
+            -out /tmp/autograder.tgz
+          tar -xzf /tmp/autograder.tgz -C autograder
+          rm -f /tmp/autograder.tgz
+
+      - name: Install app gems
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Install autograder gems
+        run: BUNDLE_GEMFILE=autograder/Gemfile bundle install --jobs 4 --retry 3
+
+      - name: Prepare database
+        run: RAILS_ENV=test bin/rails db:create db:migrate db:seed
+
+      - name: Start Rails server
+        run: RAILS_ENV=test bin/rails server -d -p 3000
+
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:3000 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server did not start in time" >&2
+          exit 1
+
+      - name: Run autograder
+        run: |
+          mkdir -p autograder/results
+          cd autograder
+          AUTOGRADER_URI=localhost:3000 BUNDLE_GEMFILE=Gemfile bundle exec rspec \
+            --require ./rspec_gradescope_formatter.rb \
+            --format RSpecGradescopeFormatter \
+            ./app_spec.rb
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: autograder-results
+          path: autograder/results/results.json

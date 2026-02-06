@@ -31,5 +31,8 @@
 
 /public/assets
 
+# Ignore autograder sources (decrypted in CI)
+/autograder/
+
 # Ignore master key for decrypting credentials and more.
 /config/master.key
