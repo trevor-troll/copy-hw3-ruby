@@ -74,388 +74,93 @@ jobs:
             --format RSpecGradescopeFormatter \
             ./app_spec.rb || true
 
-      - name: App responds to request
-        id: app-responds
-        uses: classroom-resources/autograding-command-grader@v1
+      - name: Prepare grading results
+        id: prepare-results
         if: always()
-        env:
-          TEST_NAME: "App responds to a simple request [10 points]"
-        with:
-          test-name: "App: responds to request"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
 
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
+          results_path = "autograder/results/results.json"
+          tests = []
+          if os.path.exists(results_path):
+            with open(results_path) as f:
               data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 10
+            tests = data.get("tests", [])
 
-      - name: Ratings form exists
-        id: ratings-form
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Ratings Form has #ratings_form form [5 points]"
-        with:
-          test-name: "Ratings Form: has form"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
+          test_map = {t.get("name"): t for t in tests}
 
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 5
+          expected = [
+            ("app_responds", "App: responds to request", "App responds to a simple request [10 points]", 10),
+            ("ratings_form", "Ratings Form: has form", "Ratings Form has #ratings_form form [5 points]", 5),
+            ("ratings_submit", "Ratings Form: has submit", "Ratings Form has #ratings_submit button [5 points]", 5),
+            ("ratings_checkboxes", "Ratings Form: has checkboxes", "Ratings Form has rating checkboxes [5 points]", 5),
+            ("ratings_defaults", "Ratings Form: defaults", "Ratings Form checkboxes are uniformly checked or unchecked by default [10 points]", 10),
+            ("filter_by_rating", "Filtering: by rating", "Movie Filtering filters movies by selected rating [20 points]", 20),
+            ("persist_ratings_submit", "Filtering: persist after submit", "Movie Filtering persists checked ratings after submission [25 points]", 25),
+            ("sort_title", "Sorting: Title", "Movie Sorting can sort by Title via dropdown [20 points]", 20),
+            ("sort_release", "Sorting: Release date", "Movie Sorting can sort by Release Date via dropdown [20 points]", 20),
+            ("persist_filters_sorting", "Sorting: persist filters", "Movie Sorting persists rating filters when sorting [25 points]", 25),
+            ("remember_sort", "Sorting: remember after reload", "Movie Sorting remembers sort order after reload [20 points]", 20),
+            ("restful_route", "RESTful: route", "RESTful Behavior redirects to RESTful route on filter/sort [10 points]", 10),
+            ("restore_ratings", "RESTful: restore ratings", "RESTful Behavior restores rating filters after reload [20 points]", 20),
+            ("restore_sort", "RESTful: restore sort", "RESTful Behavior restores sort order after reload [15 points]", 15),
+          ]
 
-      - name: Ratings submit button exists
-        id: ratings-submit
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Ratings Form has #ratings_submit button [5 points]"
-        with:
-          test-name: "Ratings Form: has submit"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
+          outputs = {}
+          for key, display_name, test_name, max_score in expected:
+            test = test_map.get(test_name)
+            score = 0
+            message = "Missing test result"
+            if test:
+              score = test.get("score", 0)
+              message = test.get("output", "") or ""
+            status = "pass" if score == max_score else "fail"
+            payload = {
+              "version": 1,
+              "status": status,
+              "max_score": max_score,
+              "tests": [
+                {
+                  "name": display_name,
+                  "status": status,
+                  "score": score,
+                  "message": message,
+                  "test_code": "",
+                  "filename": "",
+                  "line_no": 0,
+                  "duration": 0
+                }
+              ]
+            }
+            encoded = base64.b64encode(json.dumps(payload).encode()).decode()
+            outputs[key] = encoded
 
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 5
-
-      - name: Rating checkboxes exist
-        id: ratings-checkboxes
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Ratings Form has rating checkboxes [5 points]"
-        with:
-          test-name: "Ratings Form: has checkboxes"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 5
-
-      - name: Checkbox defaults uniform
-        id: ratings-defaults
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Ratings Form checkboxes are uniformly checked or unchecked by default [10 points]"
-        with:
-          test-name: "Ratings Form: defaults"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 10
-
-      - name: Filter by rating
-        id: filter-by-rating
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Movie Filtering filters movies by selected rating [20 points]"
-        with:
-          test-name: "Filtering: by rating"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 20
-
-      - name: Persist ratings after submit
-        id: persist-ratings-submit
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Movie Filtering persists checked ratings after submission [25 points]"
-        with:
-          test-name: "Filtering: persist after submit"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 25
-
-      - name: Sort by Title
-        id: sort-title
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Movie Sorting can sort by Title via dropdown [20 points]"
-        with:
-          test-name: "Sorting: Title"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 20
-
-      - name: Sort by Release Date
-        id: sort-release
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Movie Sorting can sort by Release Date via dropdown [20 points]"
-        with:
-          test-name: "Sorting: Release date"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 20
-
-      - name: Persist filters when sorting
-        id: persist-filters-sorting
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Movie Sorting persists rating filters when sorting [25 points]"
-        with:
-          test-name: "Sorting: persist filters"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 25
-
-      - name: Remember sort after reload
-        id: remember-sort
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "Movie Sorting remembers sort order after reload [20 points]"
-        with:
-          test-name: "Sorting: remember after reload"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 20
-
-      - name: RESTful route on filter/sort
-        id: restful-route
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "RESTful Behavior redirects to RESTful route on filter/sort [10 points]"
-        with:
-          test-name: "RESTful: route"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 10
-
-      - name: Restore ratings after reload
-        id: restore-ratings
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "RESTful Behavior restores rating filters after reload [20 points]"
-        with:
-          test-name: "RESTful: restore ratings"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 20
-
-      - name: Restore sort after reload
-        id: restore-sort
-        uses: classroom-resources/autograding-command-grader@v1
-        if: always()
-        env:
-          TEST_NAME: "RESTful Behavior restores sort order after reload [15 points]"
-        with:
-          test-name: "RESTful: restore sort"
-          setup-command: ""
-          command: |
-            python - <<'PY'
-            import json
-            import os
-            import sys
-
-            name = os.environ["TEST_NAME"]
-            with open("autograder/results/results.json") as f:
-              data = json.load(f)
-            for test in data.get("tests", []):
-              if test.get("name") == name:
-                sys.exit(0 if test.get("score") == test.get("max_score") else 1)
-            sys.exit(1)
-            PY
-          timeout: 5
-          max-score: 15
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            for key, value in outputs.items():
+              f.write(f"{key}={value}\n")
+          PY
 
       - name: Autograding Reporter
         uses: classroom-resources/autograding-grading-reporter@v1
         if: always()
         env:
-          APP-RESPONDS_RESULTS: ${{ steps.app-responds.outputs.result }}
-          RATINGS-FORM_RESULTS: ${{ steps.ratings-form.outputs.result }}
-          RATINGS-SUBMIT_RESULTS: ${{ steps.ratings-submit.outputs.result }}
-          RATINGS-CHECKBOXES_RESULTS: ${{ steps.ratings-checkboxes.outputs.result }}
-          RATINGS-DEFAULTS_RESULTS: ${{ steps.ratings-defaults.outputs.result }}
-          FILTER-BY-RATING_RESULTS: ${{ steps.filter-by-rating.outputs.result }}
-          PERSIST-RATINGS-SUBMIT_RESULTS: ${{ steps.persist-ratings-submit.outputs.result }}
-          SORT-TITLE_RESULTS: ${{ steps.sort-title.outputs.result }}
-          SORT-RELEASE_RESULTS: ${{ steps.sort-release.outputs.result }}
-          PERSIST-FILTERS-SORTING_RESULTS: ${{ steps.persist-filters-sorting.outputs.result }}
-          REMEMBER-SORT_RESULTS: ${{ steps.remember-sort.outputs.result }}
-          RESTFUL-ROUTE_RESULTS: ${{ steps.restful-route.outputs.result }}
-          RESTORE-RATINGS_RESULTS: ${{ steps.restore-ratings.outputs.result }}
-          RESTORE-SORT_RESULTS: ${{ steps.restore-sort.outputs.result }}
+          APP-RESPONDS_RESULTS: ${{ steps.prepare-results.outputs.app_responds }}
+          RATINGS-FORM_RESULTS: ${{ steps.prepare-results.outputs.ratings_form }}
+          RATINGS-SUBMIT_RESULTS: ${{ steps.prepare-results.outputs.ratings_submit }}
+          RATINGS-CHECKBOXES_RESULTS: ${{ steps.prepare-results.outputs.ratings_checkboxes }}
+          RATINGS-DEFAULTS_RESULTS: ${{ steps.prepare-results.outputs.ratings_defaults }}
+          FILTER-BY-RATING_RESULTS: ${{ steps.prepare-results.outputs.filter_by_rating }}
+          PERSIST-RATINGS-SUBMIT_RESULTS: ${{ steps.prepare-results.outputs.persist_ratings_submit }}
+          SORT-TITLE_RESULTS: ${{ steps.prepare-results.outputs.sort_title }}
+          SORT-RELEASE_RESULTS: ${{ steps.prepare-results.outputs.sort_release }}
+          PERSIST-FILTERS-SORTING_RESULTS: ${{ steps.prepare-results.outputs.persist_filters_sorting }}
+          REMEMBER-SORT_RESULTS: ${{ steps.prepare-results.outputs.remember_sort }}
+          RESTFUL-ROUTE_RESULTS: ${{ steps.prepare-results.outputs.restful_route }}
+          RESTORE-RATINGS_RESULTS: ${{ steps.prepare-results.outputs.restore_ratings }}
+          RESTORE-SORT_RESULTS: ${{ steps.prepare-results.outputs.restore_sort }}
         with:
           runners: app-responds,ratings-form,ratings-submit,ratings-checkboxes,ratings-defaults,filter-by-rating,persist-ratings-submit,sort-title,sort-release,persist-filters-sorting,remember-sort,restful-route,restore-ratings,restore-sort
 

@@ -126,9 +126,5 @@ Each push triggers GitHub Actions to run the autograder in CI. It will:
 * boot the app in test mode
 * run automated checks against the running app
 
-If your CI run fails, open the Actions tab to view logs and download the `autograder-results` artifact.
+If your CI run fails, open the Actions tab to view logs and download the `Autograding Reporter` artifact.
 
-Submission
-----------
-
-Push your changes to your assignment repository and submit according to your course instructions.
