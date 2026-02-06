@@ -33,6 +33,8 @@
 
 # Ignore autograder sources (decrypted in CI)
 /autograder/
+/.autograder-ci/
+/scripts/run_local_autograder.sh
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
