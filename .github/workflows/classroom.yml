@@ -65,17 +65,19 @@ jobs:
           exit 1
 
       - name: Run autograder
+        continue-on-error: true
         run: |
           mkdir -p autograder/results
           cd autograder
           AUTOGRADER_URI=localhost:3000 BUNDLE_GEMFILE=Gemfile bundle exec rspec \
             --require ./rspec_gradescope_formatter.rb \
             --format RSpecGradescopeFormatter \
-            ./app_spec.rb
+            ./app_spec.rb || true
 
       - name: App responds to request
         id: app-responds
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "App responds to a simple request [10 points]"
         with:
@@ -101,6 +103,7 @@ jobs:
       - name: Ratings form exists
         id: ratings-form
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Ratings Form has #ratings_form form [5 points]"
         with:
@@ -126,6 +129,7 @@ jobs:
       - name: Ratings submit button exists
         id: ratings-submit
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Ratings Form has #ratings_submit button [5 points]"
         with:
@@ -151,6 +155,7 @@ jobs:
       - name: Rating checkboxes exist
         id: ratings-checkboxes
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Ratings Form has rating checkboxes [5 points]"
         with:
@@ -176,6 +181,7 @@ jobs:
       - name: Checkbox defaults uniform
         id: ratings-defaults
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Ratings Form checkboxes are uniformly checked or unchecked by default [10 points]"
         with:
@@ -201,6 +207,7 @@ jobs:
       - name: Filter by rating
         id: filter-by-rating
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Movie Filtering filters movies by selected rating [20 points]"
         with:
@@ -226,6 +233,7 @@ jobs:
       - name: Persist ratings after submit
         id: persist-ratings-submit
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Movie Filtering persists checked ratings after submission [25 points]"
         with:
@@ -251,6 +259,7 @@ jobs:
       - name: Sort by Title
         id: sort-title
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Movie Sorting can sort by Title via dropdown [20 points]"
         with:
@@ -276,6 +285,7 @@ jobs:
       - name: Sort by Release Date
         id: sort-release
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Movie Sorting can sort by Release Date via dropdown [20 points]"
         with:
@@ -301,6 +311,7 @@ jobs:
       - name: Persist filters when sorting
         id: persist-filters-sorting
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Movie Sorting persists rating filters when sorting [25 points]"
         with:
@@ -326,6 +337,7 @@ jobs:
       - name: Remember sort after reload
         id: remember-sort
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "Movie Sorting remembers sort order after reload [20 points]"
         with:
@@ -351,6 +363,7 @@ jobs:
       - name: RESTful route on filter/sort
         id: restful-route
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "RESTful Behavior redirects to RESTful route on filter/sort [10 points]"
         with:
@@ -376,6 +389,7 @@ jobs:
       - name: Restore ratings after reload
         id: restore-ratings
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "RESTful Behavior restores rating filters after reload [20 points]"
         with:
@@ -401,6 +415,7 @@ jobs:
       - name: Restore sort after reload
         id: restore-sort
         uses: classroom-resources/autograding-command-grader@v1
+        if: always()
         env:
           TEST_NAME: "RESTful Behavior restores sort order after reload [15 points]"
         with:
@@ -425,6 +440,7 @@ jobs:
 
       - name: Autograding Reporter
         uses: classroom-resources/autograding-grading-reporter@v1
+        if: always()
         env:
           APP-RESPONDS_RESULTS: ${{ steps.app-responds.outputs.result }}
           RATINGS-FORM_RESULTS: ${{ steps.ratings-form.outputs.result }}
@@ -445,6 +461,7 @@ jobs:
 
       - name: Upload results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: autograder-results
           path: autograder/results/results.json
