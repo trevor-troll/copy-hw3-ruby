@@ -3,8 +3,6 @@
 This homework introduces the Rails MVC flow by building a simple RottenPotatoes-style app.
 You will complete and verify a basic Movies CRUD interface with Rails conventions.
 
-**NOTE: If you are working on a local computer, do not clone this repo to your workspace. Fork it first, then clone your fork.**
-
 Notice
 --------------
 Make sure the ruby version is set to 3.3.8 in your Gemfile:
