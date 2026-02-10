@@ -43,7 +43,7 @@ Primary files you will touch (files requiring modifications to complete the assi
 * `app/views/movies/_form.html.erb`, `app/views/movies/show.html.erb`, `app/views/movies/edit.html.erb`, `app/views/movies/new.html.erb`
 * `test/controllers/movies_controller_test.rb`
 * `test/system/movies_test.rb`
-* `test/fixtures/movies.yml` (you need to add this file for local testing)
+* `test/fixtures/movies.yml` (you need this file for local testing)
 
 Tasks
 -----
@@ -52,8 +52,7 @@ Tasks
 2. Add rating filters (checkboxes) and sorting (dropdown) on the index page.
 3. Keep the selected ratings and sort option after submitting and after reload.
 4. Ensure the Movies CRUD flow works end-to-end: index, show, new, create, edit, update, destroy.
-5. Add fixtures in `test/fixtures/movies.yml` so tests using `movies(:one)` pass.
-6. Run the tests and fix any failures.
+5. Run the tests and fix any failures.
 
 Local Setup
 ----------------------
