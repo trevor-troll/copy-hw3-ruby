@@ -124,6 +124,8 @@ Before you push, make sure all of the following work in your local app:
 - **RESTful restores ratings:** Reloading a RESTful URL restores the rating filters (movies shown + checkboxes).  
 - **RESTful restores sort:** Reloading a RESTful URL restores the sort order (movie order + dropdown selection).
 
+You can find more details about the test in `.github/workflows/classroom.yml` to help you complete the assignment.
+
 GitHub Actions Autograding
 --------------------------
 
