@@ -108,12 +108,12 @@ Pre-submission Checklist
 
 Before you push, make sure all of the following work in your local app:
 
+* `bin/rails test` passes (Passing the test here does not mean the completion of the assignment. Please also use the server to check whether the following functions have been implemented.)
 * The Movies index loads and lists movies
 * Rating checkboxes filter the list correctly
 * Sorting by Title and Release date works
 * Selected ratings and sort choice persist after submit and reload
 * You can create, edit, and delete a movie via the UI
-* `bin/rails test` passes
 
 GitHub Actions Autograding
 --------------------------
