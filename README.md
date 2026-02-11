@@ -108,12 +108,21 @@ Pre-submission Checklist
 
 Before you push, make sure all of the following work in your local app:
 
-* `bin/rails test` passes (Passing the test here does not mean the completion of the assignment. Please also use the server to check whether the following functions have been implemented.)
-* The Movies index loads and lists movies
-* Rating checkboxes filter the list correctly
-* Sorting by Title and Release date works
-* Selected ratings and sort choice persist after submit and reload
-* You can create, edit, and delete a movie via the UI
+- `bin/rails test` passes (Passing the test here does not mean the completion of the assignment. Please also use the server to check whether the following functions which will be tested by autograder have been implemented.)
+- **App responds:** Visiting the app (on `localhost:3000`) returns a normal page without errors.  
+- **Ratings form exists:** The movies page includes a filter `<form>` with `id="ratings_form"`.  
+- **Submit button exists:** The filter form includes a submit control with `id="ratings_submit"`.  
+- **Rating checkboxes exist:** The filter form includes checkboxes for the available movie ratings (e.g., G/PG/PG-13/R).  
+- **Uniform defaults:** On first load, the rating checkboxes are either all checked or all unchecked (not mixed).  
+- **Filter by rating works:** Submitting selected ratings shows only movies whose ratings are selected.  
+- **Filter state persists:** After submitting the filter, the same ratings remain checked on the reloaded page.  
+- **Sort by Title works:** The dropdown can sort the movie list by Title.  
+- **Sort by Release Date works:** The dropdown can sort the movie list by Release Date.  
+- **Filters persist during sorting:** Changing the sort order does not clear the selected rating filters.  
+- **Sort remembered on reload:** Reloading the page keeps the currently selected sort order (and the dropdown reflects it).  
+- **RESTful redirect:** Filtering/sorting results in a RESTful URL (typically via query parameters) rather than staying on a non-RESTful submission URL.  
+- **RESTful restores ratings:** Reloading a RESTful URL restores the rating filters (movies shown + checkboxes).  
+- **RESTful restores sort:** Reloading a RESTful URL restores the sort order (movie order + dropdown selection).
 
 GitHub Actions Autograding
 --------------------------
