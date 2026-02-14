@@ -109,19 +109,19 @@ Pre-submission Checklist
 Before you push, make sure all of the following work in your local app:
 
 - `bin/rails test` passes (Passing the test here does not mean the completion of the assignment. Please also use the server to check whether the following functions which will be tested by autograder have been implemented.)
-- **App responds:** Visiting the app (on `localhost:3000`) returns a normal page without errors.  
-- **Ratings form exists:** The movies page includes a filter `<form>` with `id="ratings_form"`.  
-- **Submit button exists:** The filter form includes a submit control with `id="ratings_submit"`.  
-- **Rating checkboxes exist:** The filter form includes checkboxes for the available movie ratings (e.g., G/PG/PG-13/R).  
-- **Uniform defaults:** On first load, the rating checkboxes are either all checked or all unchecked (not mixed).  
-- **Filter by rating works:** Submitting selected ratings shows only movies whose ratings are selected.  
-- **Filter state persists:** After submitting the filter, the same ratings remain checked on the reloaded page.  
-- **Sort by Title works:** The dropdown can sort the movie list by Title.  
-- **Sort by Release Date works:** The dropdown can sort the movie list by Release Date.  
-- **Filters persist during sorting:** Changing the sort order does not clear the selected rating filters.  
-- **Sort remembered on reload:** Reloading the page keeps the currently selected sort order (and the dropdown reflects it).  
-- **RESTful redirect:** Filtering/sorting results in a RESTful URL (typically via query parameters) rather than staying on a non-RESTful submission URL.  
-- **RESTful restores ratings:** Reloading a RESTful URL restores the rating filters (movies shown + checkboxes).  
+- **App responds:** Visiting the app (on `localhost:3000`) returns a normal page without errors.
+- **Ratings form exists:** The movies page includes a filter `<form>` with `id="ratings_form"`.
+- **Submit button exists:** The filter form includes a submit control with `id="ratings_submit"`.
+- **Rating checkboxes exist:** The filter form includes checkboxes for the available movie ratings (e.g., G/PG/PG-13/R). Each checkbox `id` must follow the pattern `ratings_X` (e.g., `ratings_G`, `ratings_PG`, `ratings_PG-13`, `ratings_R`).
+- **Uniform defaults:** On first load, the rating checkboxes are either all checked or all unchecked (not mixed).
+- **Filter by rating works:** Submitting selected ratings shows only movies whose ratings are selected. Each movie should be rendered inside `<div id="movies">` as `<div id="movie_<id>">`, containing `<p><strong>Title:</strong> ...</p>`, `<p><strong>Rating:</strong> ...</p>`, and `<p><strong>Release date:</strong> ...</p>`.
+- **Filter state persists:** After submitting the filter, the same ratings remain checked on the reloaded page.
+- **Sort by Title works:** The form includes a dropdown (`<select>`) with `name="sort_by"`. The dropdown must have an option with text `"Title"` and value `"title"`. Selecting it and submitting sorts movies alphabetically by title.
+- **Sort by Release Date works:** The dropdown must have an option with text `"Release date"` (case-insensitive match on "Release date") and value `"release_date"`. Selecting it and submitting sorts movies chronologically.
+- **Filters persist during sorting:** Changing the sort order does not clear the selected rating filters.
+- **Sort remembered on reload:** Reloading the page keeps the currently selected sort order (and the dropdown reflects it). The `sort_by` field value should remain `"title"` or `"release_date"` after reload.
+- **RESTful redirect:** Filtering/sorting results in a RESTful URL with query parameters (e.g., `?sort_by=release_date&ratings[PG]=1`) rather than staying on a non-RESTful submission URL. Note: rating parameters should use the `ratings[X]` format (e.g., `ratings[PG]`, `ratings[R]`).
+- **RESTful restores ratings:** Reloading a RESTful URL restores the rating filters (movies shown + checkboxes).
 - **RESTful restores sort:** Reloading a RESTful URL restores the sort order (movie order + dropdown selection).
 
 You can find more details about the test in `.github/workflows/classroom.yml` to help you complete the assignment.
