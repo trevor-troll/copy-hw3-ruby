@@ -1,0 +1,172 @@
+name: Autograding Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3.8"
+          bundler-cache: false
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libxml2-dev libxslt1-dev
+
+      - name: Decrypt autograder
+        env:
+          AUTOGRADER_KEY: ${{ secrets.AUTOGRADER_KEY }}
+        run: |
+          mkdir -p autograder
+          openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:"$AUTOGRADER_KEY" \
+            -in .github/secure/autograder.tgz.enc \
+            -out /tmp/autograder.tgz
+          tar -xzf /tmp/autograder.tgz -C autograder
+          rm -f /tmp/autograder.tgz
+
+      - name: Install app gems
+        run: bundle install --jobs 4 --retry 3
+
+      - name: Install autograder gems
+        run: BUNDLE_GEMFILE=autograder/Gemfile bundle install --jobs 4 --retry 3
+
+      - name: Prepare database
+        run: RAILS_ENV=test bin/rails db:create db:migrate db:seed --trace
+
+      - name: Start Rails server
+        run: RAILS_ENV=test bin/rails server -d -p 3000
+
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:3000 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server did not start in time" >&2
+          exit 1
+
+      - name: Run autograder
+        continue-on-error: true
+        run: |
+          mkdir -p autograder/results
+          cd autograder
+          AUTOGRADER_URI=localhost:3000 BUNDLE_GEMFILE=Gemfile bundle exec rspec \
+            --require ./rspec_gradescope_formatter.rb \
+            --format RSpecGradescopeFormatter \
+            ./app_spec.rb || true
+
+      - name: Prepare grading results
+        id: prepare-results
+        if: always()
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+
+          results_path = "autograder/results/results.json"
+          tests = []
+          if os.path.exists(results_path):
+            with open(results_path) as f:
+              data = json.load(f)
+            tests = data.get("tests", [])
+
+          test_map = {t.get("name"): t for t in tests}
+
+          expected = [
+            ("app_responds", "App: responds to request", "App responds to a simple request [10 points]", 10),
+            ("ratings_form", "Ratings Form: has form", "Ratings Form has #ratings_form form [5 points]", 5),
+            ("ratings_submit", "Ratings Form: has submit", "Ratings Form has #ratings_submit button [5 points]", 5),
+            ("ratings_checkboxes", "Ratings Form: has checkboxes", "Ratings Form has rating checkboxes [5 points]", 5),
+            ("ratings_defaults", "Ratings Form: defaults", "Ratings Form checkboxes are uniformly checked or unchecked by default [10 points]", 10),
+            ("filter_by_rating", "Filtering: by rating", "Movie Filtering filters movies by selected rating [20 points]", 20),
+            ("persist_ratings_submit", "Filtering: persist after submit", "Movie Filtering persists checked ratings after submission [25 points]", 25),
+            ("sort_title", "Sorting: Title", "Movie Sorting can sort by Title via dropdown [20 points]", 20),
+            ("sort_release", "Sorting: Release date", "Movie Sorting can sort by Release Date via dropdown [20 points]", 20),
+            ("persist_filters_sorting", "Sorting: persist filters", "Movie Sorting persists rating filters when sorting [25 points]", 25),
+            ("remember_sort", "Sorting: remember after reload", "Movie Sorting remembers sort order after reload [20 points]", 20),
+            ("restful_route", "RESTful: route", "RESTful Behavior redirects to RESTful route on filter/sort [10 points]", 10),
+            ("restore_ratings", "RESTful: restore ratings", "RESTful Behavior restores rating filters after reload [20 points]", 20),
+            ("restore_sort", "RESTful: restore sort", "RESTful Behavior restores sort order after reload [15 points]", 15),
+          ]
+
+          outputs = {}
+          for key, display_name, test_name, max_score in expected:
+            test = test_map.get(test_name)
+            score = 0
+            message = "Missing test result"
+            if test:
+              score = test.get("score", 0)
+              message = test.get("output", "") or ""
+            status = "pass" if score == max_score else "fail"
+            payload = {
+              "version": 1,
+              "status": status,
+              "max_score": max_score,
+              "tests": [
+                {
+                  "name": display_name,
+                  "status": status,
+                  "score": score,
+                  "message": message,
+                  "test_code": "",
+                  "filename": "",
+                  "line_no": 0,
+                  "duration": 0
+                }
+              ]
+            }
+            encoded = base64.b64encode(json.dumps(payload).encode()).decode()
+            outputs[key] = encoded
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            for key, value in outputs.items():
+              f.write(f"{key}={value}\n")
+          PY
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        if: always()
+        env:
+          APP-RESPONDS_RESULTS: ${{ steps.prepare-results.outputs.app_responds }}
+          RATINGS-FORM_RESULTS: ${{ steps.prepare-results.outputs.ratings_form }}
+          RATINGS-SUBMIT_RESULTS: ${{ steps.prepare-results.outputs.ratings_submit }}
+          RATINGS-CHECKBOXES_RESULTS: ${{ steps.prepare-results.outputs.ratings_checkboxes }}
+          RATINGS-DEFAULTS_RESULTS: ${{ steps.prepare-results.outputs.ratings_defaults }}
+          FILTER-BY-RATING_RESULTS: ${{ steps.prepare-results.outputs.filter_by_rating }}
+          PERSIST-RATINGS-SUBMIT_RESULTS: ${{ steps.prepare-results.outputs.persist_ratings_submit }}
+          SORT-TITLE_RESULTS: ${{ steps.prepare-results.outputs.sort_title }}
+          SORT-RELEASE_RESULTS: ${{ steps.prepare-results.outputs.sort_release }}
+          PERSIST-FILTERS-SORTING_RESULTS: ${{ steps.prepare-results.outputs.persist_filters_sorting }}
+          REMEMBER-SORT_RESULTS: ${{ steps.prepare-results.outputs.remember_sort }}
+          RESTFUL-ROUTE_RESULTS: ${{ steps.prepare-results.outputs.restful_route }}
+          RESTORE-RATINGS_RESULTS: ${{ steps.prepare-results.outputs.restore_ratings }}
+          RESTORE-SORT_RESULTS: ${{ steps.prepare-results.outputs.restore_sort }}
+        with:
+          runners: app-responds,ratings-form,ratings-submit,ratings-checkboxes,ratings-defaults,filter-by-rating,persist-ratings-submit,sort-title,sort-release,persist-filters-sorting,remember-sort,restful-route,restore-ratings,restore-sort
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: autograder-results
+          path: autograder/results/results.json
