@@ -5,12 +5,48 @@
 
 <h1>Movies</h1>
 
+<h2>Filter & Sort Movies</h2>
+
+<%= form_with url: movies_path, method: :get, id: "ratings_form", local: true do |f| %>
+
+  <!-- Ratings checkboxes -->
+  <fieldset>
+    <legend>Ratings:</legend>
+    <% Movie.distinct.pluck(:rating).sort.each do |rating| %>
+      <div>
+        <%= check_box_tag "ratings[#{rating}]", "1", params[:ratings]&.key?(rating), id: "ratings_#{rating}" %>
+        <%= label_tag "ratings_#{rating}", rating %>
+      </div>
+    <% end %>
+  </fieldset>
+
+  <!-- Sort dropdown -->
+  <div>
+    <%= label_tag :sort_by, "Sort by:" %>
+    <%= select_tag :sort_by,
+                   options_for_select(
+                     [["Title", "title"], ["Release date", "release_date"]],
+                     selected: params[:sort_by]
+                   ) %>
+  </div>
+
+  <div>
+    <%= submit_tag "Filter", id: "ratings_submit" %>
+  </div>
+
+<% end %>
+
 <div id="movies">
   <% @movies.each do |movie| %>
-    <%= render movie %>
-    <p>
-      <%= link_to "Show this movie", movie %>
-    </p>
+    <div id="movie_<%= movie.id %>">
+      <p><strong>Title:</strong> <%= movie.title %></p>
+      <p><strong>Rating:</strong> <%= movie.rating %></p>
+      <p><strong>Release date:</strong> <%= movie.release_date.strftime("%Y-%m-%d") if movie.release_date %></p>
+      <!-- Add links here too -->
+      <%= link_to "Show", movie %> |
+      <%= link_to "Edit", edit_movie_path(movie) %> |
+      <%= link_to "Delete", movie, data: { turbo_method: :delete, turbo_confirm: "Are you sure?" } %>
+    </div>
   <% end %>
 </div>
 

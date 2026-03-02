@@ -3,7 +3,28 @@ class MoviesController < ApplicationController
 
   # GET /movies or /movies.json
   def index
-    @movies = Movie.all
+    # available ratings (could use a constant or query existing movies)
+    @all_ratings = Movie.distinct.pluck(:rating).sort
+
+    # determine selected ratings; default to all if none were passed
+    if params[:ratings]
+      # params[:ratings] will be a hash like {"G"=>"1","PG"=>"1"}
+      @selected_ratings = params[:ratings].keys
+    else
+      @selected_ratings = @all_ratings
+    end
+
+    # sort preference
+    @sort_by = params[:sort_by]
+
+    # build base relation
+    @movies = Movie.where(rating: @selected_ratings)
+    case @sort_by
+    when "title"
+      @movies = @movies.order(:title)
+    when "release_date"
+      @movies = @movies.order(:release_date)
+    end
   end
 
   # GET /movies/1 or /movies/1.json

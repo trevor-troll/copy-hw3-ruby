@@ -3,8 +3,21 @@ one:
   rating: R
   description: A hacker discovers the truth about his reality.
   release_date: 1999-03-31
+
 two:
   title: Toy Story
   rating: G
-  description: Toys come to life when humans aren’t around.
+  description: Toys come to life when humans aren't around.
   release_date: 1995-11-22
+
+three:
+  title: Jurassic Park
+  rating: PG-13
+  description: A group of people attempt to rescue some dinosaurs.
+  release_date: 1993-06-11
+
+four:
+  title: E.T.
+  rating: PG
+  description: A visitor from outer space befriends a boy.
+  release_date: 1982-06-11
